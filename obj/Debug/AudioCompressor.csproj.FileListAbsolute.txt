@@ -1,0 +1,8 @@
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.csproj.AssemblyReference.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.MainForm.resources
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.csproj.GenerateResource.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.csproj.CoreCompileInputs.cache
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\AudioCompressor.exe
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\AudioCompressor.pdb
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.exe
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\AudioCompressor.pdb
