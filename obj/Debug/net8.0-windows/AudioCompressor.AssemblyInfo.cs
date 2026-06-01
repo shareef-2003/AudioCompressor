@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AudioCompressor")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a9b89c7e135c8e39ff1a3067877bbe97eb0f737b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c23bdadd82e2b8670844cf91746a69cfb70f24f8")]
 [assembly: System.Reflection.AssemblyProductAttribute("AudioCompressor")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AudioCompressor")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

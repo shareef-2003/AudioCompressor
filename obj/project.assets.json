@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\dell\\Desktop\\AudioCompressor\\AudioCompressor.csproj",
+      "projectUniqueName": "C:\\Users\\dell\\Desktop\\AudioCompressor\\AudioCompressor.csproj",
       "projectName": "AudioCompressor",
-      "projectPath": "c:\\Users\\dell\\Desktop\\AudioCompressor\\AudioCompressor.csproj",
+      "projectPath": "C:\\Users\\dell\\Desktop\\AudioCompressor\\AudioCompressor.csproj",
       "packagesPath": "C:\\Users\\dell\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\dell\\Desktop\\AudioCompressor\\obj\\",
+      "outputPath": "C:\\Users\\dell\\Desktop\\AudioCompressor\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\dell\\AppData\\Roaming\\NuGet\\NuGet.Config",

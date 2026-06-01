@@ -84,7 +84,7 @@ namespace AudioCompressor
         // File Info
         private Label lblInfoSize, lblInfoDuration, lblInfoSampleRate;
         private Label lblInfoChannels, lblInfoBitRate, lblInfoEncoding;
-        private Label lblInfoSizeV, lblInfoDurationV, lblInfoSampleRateV;
+        private Label lblInfoFileNameV, lblInfoSizeV, lblInfoDurationV, lblInfoSampleRateV;
         private Label lblInfoChannelsV, lblInfoBitRateV, lblInfoEncodingV;
 
         // Algorithm buttons
@@ -540,20 +540,20 @@ namespace AudioCompressor
             TableLayoutPanel grid = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 6,
+                ColumnCount = 7,
                 RowCount = 2,
                 BackColor = Color.Transparent
             };
-            for (int c = 0; c < 6; c++)
-                grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / 6));
+            for (int c = 0; c < 7; c++)
+                grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f / 7));
             grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
             grid.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
 
-            string[] keys = { "حجم الملف", "المدة الزمنية", "معدل العينات", "القنوات", "معدل البت", "نوع الترميز" };
-            Label[] keyLabels = new Label[6];
-            Label[] valLabels = new Label[6];
+            string[] keys = { "اسم الملف", "حجم الملف", "المدة الزمنية", "معدل العينات", "القنوات", "معدل البت", "نوع الترميز" };
+            Label[] keyLabels = new Label[7];
+            Label[] valLabels = new Label[7];
 
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
             {
                 keyLabels[i] = new Label
                 {
@@ -569,15 +569,17 @@ namespace AudioCompressor
                     ForeColor = Color.FromArgb(200, 225, 255),
                     Font = new Font("Consolas", 9, FontStyle.Bold),
                     Dock = DockStyle.Fill,
-                    TextAlign = ContentAlignment.TopCenter
+                    TextAlign = ContentAlignment.TopCenter,
+                    AutoEllipsis = true
                 };
                 grid.Controls.Add(keyLabels[i], i, 0);
                 grid.Controls.Add(valLabels[i], i, 1);
             }
 
-            lblInfoSizeV = valLabels[0]; lblInfoDurationV = valLabels[1];
-            lblInfoSampleRateV = valLabels[2]; lblInfoChannelsV = valLabels[3];
-            lblInfoBitRateV = valLabels[4]; lblInfoEncodingV = valLabels[5];
+            lblInfoFileNameV = valLabels[0]; lblInfoSizeV = valLabels[1];
+            lblInfoDurationV = valLabels[2]; lblInfoSampleRateV = valLabels[3];
+            lblInfoChannelsV = valLabels[4]; lblInfoBitRateV = valLabels[5];
+            lblInfoEncodingV = valLabels[6];
 
             inner.Controls.Add(grid);
             return p;
@@ -933,6 +935,7 @@ namespace AudioCompressor
                 lblFileName.ForeColor = Color.FromArgb(0, 200, 255);
 
                 // عرض خصائص الملف
+                lblInfoFileNameV.Text = _currentFile.FileName;
                 lblInfoSizeV.Text = _currentFile.FileSizeFormatted;
                 lblInfoDurationV.Text = _currentFile.DurationFormatted;
                 lblInfoSampleRateV.Text = _currentFile.SampleRate + " Hz";
@@ -1428,7 +1431,7 @@ namespace AudioCompressor
             ResetProgress();
             lblFileName.Text = "لم يتم اختيار ملف";
             lblFileName.ForeColor = Color.FromArgb(100, 130, 160);
-            lblInfoSizeV.Text = lblInfoDurationV.Text = lblInfoSampleRateV.Text =
+            lblInfoFileNameV.Text = lblInfoSizeV.Text = lblInfoDurationV.Text = lblInfoSampleRateV.Text =
             lblInfoChannelsV.Text = lblInfoBitRateV.Text = lblInfoEncodingV.Text = "—";
             rtbReport.Text = "سيظهر التقرير هنا بعد اكتمال عملية الضغط...";
             lblStatus.Text = "";
