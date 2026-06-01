@@ -39,10 +39,10 @@ namespace AudioCompressor
 
 
 
-        private Button btnPlayAudio;
-        private Button btnPauseAudio;
-        private Button btnStopAudio;
-        private bool _isPaused = false;
+        // private Button btnPlayAudio;
+        // private Button btnPauseAudio;
+        // private Button btnStopAudio;
+        // private bool _isPaused = false;
 
 
 
@@ -75,8 +75,6 @@ namespace AudioCompressor
         // File section
         private Button btnBrowse;
         private Button btnOpenFile;
-        private Button btnPlay;
-        private Button btnStop;
         private Button btnPlayHeader;
         private Button btnStopHeader;
         private Label lblFileName;
@@ -118,16 +116,15 @@ namespace AudioCompressor
         // ─── Constructor ──────────────────────────────────────────────────────
         public MainForm()
         {
-            InitializeComponent();
+            //InitializeComponent();
             BuildUI();
             SetupTimers();
             UpdateUI();
 
             this.Load += (s, e) =>
-   {
-       if (splitMain != null)
-           splitMain.SplitterDistance = 270;
-   };
+            {
+                ConfigureMainSplitter();
+            };
         }
 
         // ═══════════════════════════════════════════════════════════════════════
@@ -195,19 +192,35 @@ namespace AudioCompressor
             BuildMainPanel(splitMain.Panel2);
 
             // بعد ما يأخذ حجم فعلي
-            splitMain.HandleCreated += (s, e) =>
-            {
-                splitMain.Panel1MinSize = 240;
-                splitMain.Panel2MinSize = 400;
+            splitMain.HandleCreated += (s, e) => ConfigureMainSplitter();
+            splitMain.SizeChanged += (s, e) => ConfigureMainSplitter();
+        }
 
-                int width = splitMain.Width;
+        private void ConfigureMainSplitter()
+        {
+            if (splitMain == null || splitMain.IsDisposed)
+                return;
 
-                if (width > 650)
-                {
-                    splitMain.SplitterDistance =
-                        Math.Max(240, Math.Min(270, width - 400));
-                }
-            };
+            int width = splitMain.ClientSize.Width;
+            if (width <= 1)
+                return;
+
+            int panel1Min = Math.Min(240, width - 1);
+            int panel2Min = Math.Min(400, Math.Max(0, width - panel1Min - 1));
+
+            if (splitMain.Panel1MinSize != panel1Min)
+                splitMain.Panel1MinSize = panel1Min;
+            if (splitMain.Panel2MinSize != panel2Min)
+                splitMain.Panel2MinSize = panel2Min;
+
+            int minDistance = splitMain.Panel1MinSize;
+            int maxDistance = width - splitMain.Panel2MinSize;
+            if (minDistance > maxDistance)
+                return;
+
+            int distance = Math.Max(minDistance, Math.Min(270, maxDistance));
+            if (splitMain.SplitterDistance != distance)
+                splitMain.SplitterDistance = distance;
         }
 
 
@@ -404,35 +417,35 @@ namespace AudioCompressor
                 Location = new Point(176, 8),
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            btnPlay = new Button
-            {
-                Text = "تشغيل",
-                Width = 80,
-                Height = 28,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(0, 120, 80),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9),
-                Cursor = Cursors.Hand,
-                Enabled = false
-            };
-            btnPlay.FlatAppearance.BorderSize = 0;
-            btnPlay.Click += BtnPlay_Click;
+            // btnPlay = new Button
+            // {
+            //     Text = "تشغيل",
+            //     Width = 80,
+            //     Height = 28,
+            //     FlatStyle = FlatStyle.Flat,
+            //     BackColor = Color.FromArgb(0, 120, 80),
+            //     ForeColor = Color.White,
+            //     Font = new Font("Segoe UI", 9),
+            //     Cursor = Cursors.Hand,
+            //     Enabled = false
+            // };
+            // btnPlay.FlatAppearance.BorderSize = 0;
+            // btnPlay.Click += BtnPlay_Click;
 
-            btnStop = new Button
-            {
-                Text = "إيقاف",
-                Width = 80,
-                Height = 28,
-                FlatStyle = FlatStyle.Flat,
-                BackColor = Color.FromArgb(120, 50, 50),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9),
-                Cursor = Cursors.Hand,
-                Enabled = false
-            };
-            btnStop.FlatAppearance.BorderSize = 0;
-            btnStop.Click += BtnStop_Click;
+            // btnStop = new Button
+            // {
+            //     Text = "إيقاف",
+            //     Width = 80,
+            //     Height = 28,
+            //     FlatStyle = FlatStyle.Flat,
+            //     BackColor = Color.FromArgb(120, 50, 50),
+            //     ForeColor = Color.White,
+            //     Font = new Font("Segoe UI", 9),
+            //     Cursor = Cursors.Hand,
+            //     Enabled = false
+            // };
+            // btnStop.FlatAppearance.BorderSize = 0;
+            // btnStop.Click += BtnStop_Click;
 
             // Anchor buttons to right using a layout panel for reliable positioning
             TableLayoutPanel topRowLayout = new TableLayoutPanel
@@ -459,9 +472,6 @@ namespace AudioCompressor
                 Anchor = AnchorStyles.Top | AnchorStyles.Right,
                 AutoSize = false
             };
-
-            controlsPanel.Controls.Add(btnPlay);
-            controlsPanel.Controls.Add(btnStop);
 
             lblFileName.Dock = DockStyle.Fill;
             lblFileName.Margin = new Padding(12, 0, 0, 0);
@@ -1032,40 +1042,40 @@ namespace AudioCompressor
             return mciGetErrorString(code, sb, sb.Capacity) ? sb.ToString() : "Unknown playback error";
         }
 
-        private static double TryGetMediaDurationSeconds(string path)
-        {
-            string alias = "AudioCompressorDuration";
-            SendMci($"close {alias}");
+        // private static double TryGetMediaDurationSeconds(string path)
+        // {
+        //     string alias = "AudioCompressorDuration";
+        //     SendMci($"close {alias}");
 
-            string ext = Path.GetExtension(path).ToLowerInvariant();
-            string deviceType = ext == ".wav" ? "waveaudio" : "mpegvideo";
-            int result = SendMci($"open \"{path}\" type {deviceType} alias {alias}");
+        //     string ext = Path.GetExtension(path).ToLowerInvariant();
+        //     string deviceType = ext == ".wav" ? "waveaudio" : "mpegvideo";
+        //     int result = SendMci($"open \"{path}\" type {deviceType} alias {alias}");
 
-            if (result != 0)
-                result = SendMci($"open \"{path}\" alias {alias}");
+        //     if (result != 0)
+        //         result = SendMci($"open \"{path}\" alias {alias}");
 
-            if (result != 0)
-                return 0;
+        //     if (result != 0)
+        //         return 0;
 
-            try
-            {
-                SendMci($"set {alias} time format milliseconds");
+        //     try
+        //     {
+        //         SendMci($"set {alias} time format milliseconds");
 
-                StringBuilder length = new StringBuilder(64);
-                result = mciSendString($"status {alias} length", length, length.Capacity, IntPtr.Zero);
-                if (result != 0)
-                    return 0;
+        //         StringBuilder length = new StringBuilder(64);
+        //         result = mciSendString($"status {alias} length", length, length.Capacity, IntPtr.Zero);
+        //         if (result != 0)
+        //             return 0;
 
-                if (double.TryParse(length.ToString(), out double milliseconds) && milliseconds > 0)
-                    return milliseconds / 1000.0;
+        //         if (double.TryParse(length.ToString(), out double milliseconds) && milliseconds > 0)
+        //             return milliseconds / 1000.0;
 
-                return 0;
-            }
-            finally
-            {
-                SendMci($"close {alias}");
-            }
-        }
+        //         return 0;
+        //     }
+        //     finally
+        //     {
+        //         SendMci($"close {alias}");
+        //     }
+        // }
 
         private void OpenMciPlayer(string path)
         {
@@ -1095,8 +1105,8 @@ namespace AudioCompressor
         private void BtnPlay_Click(object sender, EventArgs e)
         {
             if (_currentFile == null) return;
-            if (_player == null)
-            { MessageBox.Show("التشغيل متاح فقط لملفات WAV.", "تنبيه"); return; }
+            // if (_player == null)
+            // { MessageBox.Show("التشغيل متاح فقط لملفات WAV.", "تنبيه"); return; }
 
             try
             {
@@ -1106,8 +1116,7 @@ namespace AudioCompressor
                     throw new InvalidOperationException(GetMciError(result));
                 _playStart = DateTime.Now;
                 _playTimer.Start();
-                btnPlay.Enabled = false;
-                btnStop.Enabled = true;
+                SetPlaybackButtons(true);
             }
             catch (Exception ex)
             { MessageBox.Show("خطأ في التشغيل: " + ex.Message); }
@@ -1120,8 +1129,7 @@ namespace AudioCompressor
             pbPlayback.Value = 0;
             pnlWaveform.SetPlayPosition(0);
             lblDuration.Text = $"00:00.0 / {_currentFile?.DurationFormatted ?? "00:00.0"}";
-            btnPlay.Enabled = true;
-            btnStop.Enabled = false;
+            SetPlaybackButtons(false);
         }
 
         private void PlayTimer_Tick(object sender, EventArgs e)
@@ -1137,8 +1145,7 @@ namespace AudioCompressor
             {
                 CloseMciPlayer();
                 _playTimer.Stop();
-                btnPlay.Enabled = true;
-                btnStop.Enabled = false;
+                SetPlaybackButtons(false);
             }
         }
 
@@ -1399,6 +1406,16 @@ namespace AudioCompressor
             chartSpeed?.Reset();
         }
 
+        private void SetPlaybackButtons(bool isPlaying)
+        {
+            bool hasFile = _currentFile != null;
+
+            if (btnPlayHeader != null)
+                btnPlayHeader.Enabled = hasFile && !isPlaying;
+            if (btnStopHeader != null)
+                btnStopHeader.Enabled = hasFile && isPlaying;
+        }
+
         private void ResetAll()
         {
             CloseMciPlayer();
@@ -1415,6 +1432,7 @@ namespace AudioCompressor
             lblInfoChannelsV.Text = lblInfoBitRateV.Text = lblInfoEncodingV.Text = "—";
             rtbReport.Text = "سيظهر التقرير هنا بعد اكتمال عملية الضغط...";
             lblStatus.Text = "";
+            SetPlaybackButtons(false);
             UpdateUI();
         }
 
@@ -1422,12 +1440,11 @@ namespace AudioCompressor
         {
             bool hasFile = _currentFile != null;
             bool hasResult = _lastResult != null;
-            btnPlay.Enabled = hasFile;
-            btnStop.Enabled = hasFile;
-            btnCompress.Enabled = hasFile;
-            btnDecompress.Enabled = hasResult;
-            btnSave.Enabled = hasResult;
-            btnCancel.Enabled = false;
+            SetPlaybackButtons(_mciOpen);
+            // btnCompress.Enabled = hasFile;
+            //btnDecompress.Enabled = hasResult;
+            // btnSave.Enabled = hasResult;
+            //btnCancel.Enabled = false;
         }
     }
 }

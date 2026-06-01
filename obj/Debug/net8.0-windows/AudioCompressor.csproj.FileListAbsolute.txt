@@ -1,0 +1,15 @@
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\AudioCompressor.exe
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\AudioCompressor.deps.json
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\AudioCompressor.runtimeconfig.json
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\AudioCompressor.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\AudioCompressor.pdb
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.AssemblyInfoInputs.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.AssemblyInfo.cs
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.csproj.CoreCompileInputs.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.sourcelink.json
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.dll
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\refint\AudioCompressor.dll
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.pdb
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.genruntimeconfig.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\ref\AudioCompressor.dll
