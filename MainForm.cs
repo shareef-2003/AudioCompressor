@@ -12,6 +12,7 @@ using System.Windows.Forms;
 using AudioCompressor.Algorithms;
 using AudioCompressor.Models;
 using AudioCompressor.UI;
+using NAudio.Wave;
 
 namespace AudioCompressor
 {
@@ -104,10 +105,14 @@ namespace AudioCompressor
         private Button btnDecompress;
         private Button btnCancel;
         private Button btnSave;
+        private Button btnSaveDecompressed;
         private Button btnReset;
         private ProgressBar pbCompression;
         private Label lblProgress;
         private Label lblStatus;
+
+        // مسار الملف المفكوك الأخير (مؤقت)
+        private string _lastDecompressedWavPath;
 
         // Report
         private RichTextBox rtbReport;
@@ -338,6 +343,10 @@ namespace AudioCompressor
             btnSave = MakeButton("💾  حفظ الملف المضغوط", Color.FromArgb(30, 100, 50), sideW, 34);
             btnSave.Click += BtnSave_Click;
             flow.Controls.Add(btnSave);
+
+            btnSaveDecompressed = MakeButton("💾  حفظ الملف المفكوك", Color.FromArgb(30, 100, 50), sideW, 34);
+            btnSaveDecompressed.Click += BtnSaveDecompressed_Click;
+            flow.Controls.Add(btnSaveDecompressed);
 
             btnReset = MakeButton("↺  إعادة ضبط", Color.FromArgb(50, 55, 70), sideW, 30);
             btnReset.Click += (s, e) => ResetAll();
@@ -877,16 +886,15 @@ namespace AudioCompressor
                 if (!File.Exists(path)) return;
                 string ext = Path.GetExtension(path).ToUpperInvariant().TrimStart('.');
 
-                short[] samples = null;
-                int sampleRate = 44100, channels = 1, bitsPerSample = 16;
+                short[] samples = ReadAudioFile(path, out int sampleRate, out int channels, out int bitsPerSample);
                 long fileSize = new FileInfo(path).Length;
 
-                if (ext == "WAV")
+                if (false)
                 {
                     // قراءة WAV مباشرة
                     samples = ReadWavFile(path, ref sampleRate, ref channels, ref bitsPerSample);
                 }
-                else
+                else if (false)
                 {
                     // محاولة تحويل الملف إلى WAV مؤقت باستخدام ffmpeg
                     string wavTemp = ConvertToWavWithFFmpeg(path);
@@ -957,6 +965,31 @@ namespace AudioCompressor
             catch (Exception ex)
             {
                 MessageBox.Show("خطأ في تحميل الملف:\n" + ex.Message, "خطأ");
+            }
+        }
+
+        private short[] ReadAudioFile(string path, out int sampleRate, out int channels, out int bitsPerSample)
+        {
+            using (var reader = new AudioFileReader(path))
+            {
+                sampleRate = reader.WaveFormat.SampleRate;
+                channels = reader.WaveFormat.Channels;
+                bitsPerSample = 16;
+
+                var samples = new List<short>();
+                float[] buffer = new float[sampleRate * channels];
+                int read;
+
+                while ((read = reader.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    for (int i = 0; i < read; i++)
+                    {
+                        float value = Math.Max(-1.0f, Math.Min(1.0f, buffer[i]));
+                        samples.Add((short)(value * short.MaxValue));
+                    }
+                }
+
+                return samples.ToArray();
             }
         }
 
@@ -1200,12 +1233,11 @@ namespace AudioCompressor
 
                 double elapsed = (DateTime.Now - _compressStart).TotalSeconds;
 
-                // حساب حجم البيانات الصوتية الخام (2 بايت لكل عينة 16-bit)
-                long originalPcmSize = _currentFile.Samples.Length * 2;
-
+                // استخدم حجم الملف الفعلي (يتضمن رؤوس الملفات وغيرها)
+                // بدل حساب حجم PCM الخام لتطابق معلومات الملف الفعلية
                 _lastResult = new CompressionResult
                 {
-                    OriginalSize = originalPcmSize,
+                    OriginalSize = _currentFile.FileSize,
                     CompressedSize = compressed.Length,
                     ElapsedSeconds = elapsed,
                     Settings = settings,
@@ -1251,14 +1283,49 @@ namespace AudioCompressor
                 var settings = BuildSettings();
                 short[] recovered = algo.Decompress(_lastResult.CompressedData, settings);
 
-                string match = (recovered.Length == _currentFile.Samples.Length) ? "✓" : "⚠";
-                MessageBox.Show(
-                    $"{match} تم فك الضغط بنجاح\n" +
+                int origLen = _currentFile?.Samples?.Length ?? 0;
+                int recLen = recovered?.Length ?? 0;
+                int min = Math.Min(origLen, recLen);
+                long diffCount = 0;
+                double mse = 0.0;
+                for (int i = 0; i < min; i++)
+                {
+                    int d = recovered[i] - _currentFile.Samples[i];
+                    if (d != 0) diffCount++;
+                    mse += (double)d * d;
+                }
+                if (min > 0) mse /= min;
+
+                string status = (recLen == origLen && diffCount == 0) ? "✓" : "⚠";
+                string details =
+                    $"{status} تم فك الضغط\n" +
                     $"الخوارزمية: {algo.Name}\n" +
-                    $"عدد العينات الأصلية: {_currentFile.Samples.Length:N0}\n" +
-                    $"عدد العينات المستعادة: {recovered.Length:N0}\n" +
-                    $"المدة التقريبية: {(double)recovered.Length / _currentFile.SampleRate:F2} ثانية",
-                    "فك الضغط", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    $"عدد العينات الأصلية: {origLen:N0}\n" +
+                    $"عدد العينات المستعادة: {recLen:N0}\n" +
+                    $"الاختلافات (عينات): {diffCount:N0}\n" +
+                    $"MSE (على العينات المقارنة): {mse:F2}\n" +
+                    $"المدة التقريبية: {(double)recLen / _currentFile.SampleRate:F2} ثانية";
+
+                MessageBox.Show(details, "فك الضغط", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                // بعد العرض، احفظ النتيجة كملف WAV مؤقت وشغّله تلقائياً
+                try
+                {
+                    string tmpWav = WriteTempWav(recovered, _currentFile.SampleRate, _currentFile.Channels);
+                    OpenMciPlayer(tmpWav);
+                    int res = SendMci($"play {MciAlias}");
+                    if (res != 0) throw new InvalidOperationException(GetMciError(res));
+                    _playStart = DateTime.Now;
+                    _playTimer.Start();
+                    SetPlaybackButtons(true);
+                    lblStatus.Text = $"✓ تم تشغيل الملف المفكوك (مؤقت)";
+                    lblStatus.ForeColor = Color.FromArgb(50, 200, 100);
+                }
+                catch (Exception ex)
+                {
+                    // لا تفشل العملية الكلية إذا فشل التشغيل
+                    lblStatus.Text = "تحذير: لم يتم تشغيل الملف بعد فك الضغط.";
+                    lblStatus.ForeColor = Color.FromArgb(220, 160, 40);
+                }
             }
             catch (Exception ex)
             {
@@ -1304,6 +1371,73 @@ namespace AudioCompressor
             }
         }
 
+        private string WriteTempWav(short[] samples, int sampleRate, int channels)
+        {
+            string path = Path.Combine(Path.GetTempPath(), "audiocomp_decompressed_" + Guid.NewGuid().ToString() + ".wav");
+            using (var fs = File.Create(path))
+            using (var bw = new BinaryWriter(fs))
+            {
+                int bytesPerSample = 2;
+                int blockAlign = channels * bytesPerSample;
+                int byteRate = sampleRate * blockAlign;
+                int dataSize = samples.Length * bytesPerSample;
+
+                // RIFF header
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+                bw.Write(36 + dataSize);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+
+                // fmt chunk
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+                bw.Write(16); // PCM
+                bw.Write((short)1); // PCM format
+                bw.Write((short)channels);
+                bw.Write(sampleRate);
+                bw.Write(byteRate);
+                bw.Write((short)blockAlign);
+                bw.Write((short)(bytesPerSample * 8));
+
+                // data chunk
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+                bw.Write(dataSize);
+
+                // write samples (assume interleaved if multi-channel)
+                foreach (short s in samples)
+                    bw.Write(s);
+            }
+            _lastDecompressedWavPath = path;
+            return path;
+        }
+
+        private void BtnSaveDecompressed_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(_lastDecompressedWavPath) || !File.Exists(_lastDecompressedWavPath))
+            {
+                MessageBox.Show("لا يوجد ملف مفكوك مؤقت لحفظه. قم بفك الضغط أولاً.", "تنبيه", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (SaveFileDialog dlg = new SaveFileDialog())
+            {
+                dlg.Title = "حفظ الملف المفكوك WAV";
+                dlg.Filter = "WAV audio|*.wav|All files|*.*";
+                dlg.FileName = Path.GetFileNameWithoutExtension(_currentFile?.FilePath ?? "decompressed") + "_decompressed.wav";
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        File.Copy(_lastDecompressedWavPath, dlg.FileName, true);
+                        lblStatus.Text = $"✓ تم حفظ الملف المفكوك: {Path.GetFileName(dlg.FileName)}";
+                        lblStatus.ForeColor = Color.FromArgb(50, 200, 100);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("خطأ في حفظ الملف المفكوك:\n" + ex.Message, "خطأ");
+                    }
+                }
+            }
+        }
+
         // ═══════════════════════════════════════════════════════════════════════
         //  Report
         // ═══════════════════════════════════════════════════════════════════════
@@ -1321,7 +1455,11 @@ namespace AudioCompressor
             App("");
             App("  [الملف الأصلي]", Color.FromArgb(0, 160, 220));
             AppRow("  الاسم", _currentFile.FileName);
-            AppRow("  الحجم الأصلي", r.OriginalSizeFormatted);
+            // أظهر كلا الحجمين: حجم الملف على القرص وحجم PCM الخام بعد فك الترميز
+            long pcmSize = _currentFile?.Samples != null ? _currentFile.Samples.Length * 2L : 0L;
+            string pcmSizeFormatted = FormatSize(pcmSize);
+            AppRow("  الحجم (ملف)", _currentFile.FileSizeFormatted);
+            AppRow("  الحجم (PCM خام)", pcmSizeFormatted);
             AppRow("  المدة", _currentFile.DurationFormatted);
             AppRow("  معدل العينات", _currentFile.SampleRate + " Hz");
             AppRow("  القنوات", _currentFile.Channels == 1 ? "Mono" : "Stereo");
@@ -1330,8 +1468,13 @@ namespace AudioCompressor
             App("  [نتائج الضغط]", Color.FromArgb(0, 160, 220));
             AppRow("  الخوارزمية", algo.Name);
             AppRow("  حجم الملف بعد الضغط", $"{r.CompressedSize:N0} بايت ({r.CompressedSizeFormatted})");
-            AppRow("  نسبة التوفير", $"{r.SavingPercent:F1}%");
-            AppRow("  نسبة الضغط", $"{r.CompressionRatio:F2}:1");
+            // حساب نسبتي التوفير والضغط بالمقارنة مع PCM الخام وأيضاً بالمقارنة مع حجم الملف (إن وُجد)
+            double savingRelativeToPcm = pcmSize > 0 ? (1.0 - (double)r.CompressedSize / pcmSize) * 100 : 0;
+            double ratioRelativeToPcm = (pcmSize > 0 && r.CompressedSize > 0) ? (double)pcmSize / r.CompressedSize : 1;
+            AppRow("  نسبة التوفير (نسبة إلى الملف)", $"{r.SavingPercent:F1}%");
+            AppRow("  نسبة التوفير (نسبة إلى PCM)", $"{savingRelativeToPcm:F1}%");
+            AppRow("  نسبة الضغط (نسبة إلى الملف)", $"{r.CompressionRatio:F2}:1");
+            AppRow("  نسبة الضغط (نسبة إلى PCM)", $"{ratioRelativeToPcm:F2}:1");
             if (_currentFile?.Samples != null && _currentFile.Samples.Length > 0)
             {
                 double bps = r.CompressedSize * 8.0 / _currentFile.Samples.Length;
@@ -1364,6 +1507,13 @@ namespace AudioCompressor
             rtbReport.AppendText(key.PadRight(30));
             rtbReport.SelectionColor = Color.FromArgb(220, 240, 255);
             rtbReport.AppendText(val + "\n");
+        }
+
+        private string FormatSize(long bytes)
+        {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1048576) return (bytes / 1024.0).ToString("F1") + " KB";
+            return (bytes / 1048576.0).ToString("F2") + " MB";
         }
 
         // ═══════════════════════════════════════════════════════════════════════

@@ -13,3 +13,12 @@ C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\refint\AudioCompr
 C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.pdb
 C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.genruntimeconfig.cache
 C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\ref\AudioCompressor.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.Asio.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.Core.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.Midi.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.Wasapi.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.WinForms.dll
+C:\Users\dell\Desktop\AudioCompressor\bin\Debug\net8.0-windows\NAudio.WinMM.dll
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCompressor.csproj.AssemblyReference.cache
+C:\Users\dell\Desktop\AudioCompressor\obj\Debug\net8.0-windows\AudioCom.E819DA11.Up2Date
