@@ -39,18 +39,6 @@ namespace AudioCompressor
         // ─── تشغيل الصوت ─────────────────────────────────────────────────────
 
 
-
-        // private Button btnPlayAudio;
-        // private Button btnPauseAudio;
-        // private Button btnStopAudio;
-        // private bool _isPaused = false;
-
-
-
-
-
-
-
         private SoundPlayer _player;
         private System.Windows.Forms.Timer _playTimer;
         private DateTime _playStart;
@@ -83,8 +71,6 @@ namespace AudioCompressor
         private Label lblDuration;
 
         // File Info
-        private Label lblInfoSize, lblInfoDuration, lblInfoSampleRate;
-        private Label lblInfoChannels, lblInfoBitRate, lblInfoEncoding;
         private Label lblInfoFileNameV, lblInfoSizeV, lblInfoDurationV, lblInfoSampleRateV;
         private Label lblInfoChannelsV, lblInfoBitRateV, lblInfoEncodingV;
 
@@ -426,35 +412,7 @@ namespace AudioCompressor
                 Location = new Point(176, 8),
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            // btnPlay = new Button
-            // {
-            //     Text = "تشغيل",
-            //     Width = 80,
-            //     Height = 28,
-            //     FlatStyle = FlatStyle.Flat,
-            //     BackColor = Color.FromArgb(0, 120, 80),
-            //     ForeColor = Color.White,
-            //     Font = new Font("Segoe UI", 9),
-            //     Cursor = Cursors.Hand,
-            //     Enabled = false
-            // };
-            // btnPlay.FlatAppearance.BorderSize = 0;
-            // btnPlay.Click += BtnPlay_Click;
 
-            // btnStop = new Button
-            // {
-            //     Text = "إيقاف",
-            //     Width = 80,
-            //     Height = 28,
-            //     FlatStyle = FlatStyle.Flat,
-            //     BackColor = Color.FromArgb(120, 50, 50),
-            //     ForeColor = Color.White,
-            //     Font = new Font("Segoe UI", 9),
-            //     Cursor = Cursors.Hand,
-            //     Enabled = false
-            // };
-            // btnStop.FlatAppearance.BorderSize = 0;
-            // btnStop.Click += BtnStop_Click;
 
             // Anchor buttons to right using a layout panel for reliable positioning
             TableLayoutPanel topRowLayout = new TableLayoutPanel
@@ -889,34 +847,7 @@ namespace AudioCompressor
                 short[] samples = ReadAudioFile(path, out int sampleRate, out int channels, out int bitsPerSample);
                 long fileSize = new FileInfo(path).Length;
 
-                if (false)
-                {
-                    // قراءة WAV مباشرة
-                    samples = ReadWavFile(path, ref sampleRate, ref channels, ref bitsPerSample);
-                }
-                else if (false)
-                {
-                    // محاولة تحويل الملف إلى WAV مؤقت باستخدام ffmpeg
-                    string wavTemp = ConvertToWavWithFFmpeg(path);
-                    if (wavTemp != null && File.Exists(wavTemp))
-                    {
-                        try
-                        {
-                            samples = ReadWavFile(wavTemp, ref sampleRate, ref channels, ref bitsPerSample);
-                            File.Delete(wavTemp);
-                        }
-                        catch
-                        {
-                            if (File.Exists(wavTemp)) File.Delete(wavTemp);
-                            throw new Exception($"تعذّر تحويل {ext} باستخدام ffmpeg. تأكد من تثبيت ffmpeg على النظام.");
-                        }
-                    }
-                    else
-                    {
-                        throw new Exception($"ffmpeg غير متثبت. يرجى تثبيت ffmpeg لدعم صيغة {ext}\n" +
-                            "من الموقع: https://ffmpeg.org/download.html");
-                    }
-                }
+
 
                 if (samples == null || samples.Length == 0)
                 { MessageBox.Show("تعذّر قراءة بيانات الصوت.", "خطأ"); return; }
@@ -993,76 +924,7 @@ namespace AudioCompressor
             }
         }
 
-        private short[] ReadWavFile(string path, ref int sampleRate, ref int channels, ref int bitsPerSample)
-        {
-            short[] samples = null;
-            using (FileStream fs = File.OpenRead(path))
-            using (BinaryReader br = new BinaryReader(fs))
-            {
-                // قراءة WAV header
-                string riff = new string(br.ReadChars(4));
-                br.ReadInt32();
-                string wave = new string(br.ReadChars(4));
 
-                if (riff != "RIFF" || wave != "WAVE")
-                    throw new Exception("ملف WAV غير صالح");// RIFF header
-                while (fs.Position < fs.Length - 8)
-                {
-                    string chunkId = new string(br.ReadChars(4));
-                    int chunkSize = br.ReadInt32();
-                    if (chunkId == "fmt ")
-                    {
-                        br.ReadInt16(); // format
-                        channels = br.ReadInt16();
-                        sampleRate = br.ReadInt32();
-                        br.ReadInt32(); // byte rate
-                        br.ReadInt16(); // block align
-                        bitsPerSample = br.ReadInt16();
-                        if (chunkSize > 16) br.ReadBytes(chunkSize - 16);
-                    }
-                    else if (chunkId == "data")
-                    {
-                        byte[] raw = br.ReadBytes(chunkSize);
-                        samples = new short[raw.Length / 2];
-                        for (int i = 0; i < samples.Length; i++)
-                            samples[i] = BitConverter.ToInt16(raw, i * 2);
-                        break;
-                    }
-                    else br.ReadBytes(chunkSize);
-                }
-            }
-            return samples;
-        }
-
-        private string ConvertToWavWithFFmpeg(string inputPath)
-        {
-            try
-            {
-                string tempWav = Path.Combine(Path.GetTempPath(), "audiocomp_" + Guid.NewGuid().ToString() + ".wav");
-
-                var processInfo = new ProcessStartInfo
-                {
-                    FileName = "ffmpeg",
-                    Arguments = $"-i \"{inputPath}\" -acodec pcm_s16le -ar 44100 -ac 2 \"{tempWav}\" -y",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                using (var process = Process.Start(processInfo))
-                {
-                    process.WaitForExit(30000); // timeout 30 seconds
-                    if (process.ExitCode == 0 && File.Exists(tempWav))
-                        return tempWav;
-                }
-            }
-            catch
-            {
-            }
-
-            return null;
-        }
 
         // ═══════════════════════════════════════════════════════════════════════
         //  Playback
@@ -1078,40 +940,7 @@ namespace AudioCompressor
             return mciGetErrorString(code, sb, sb.Capacity) ? sb.ToString() : "Unknown playback error";
         }
 
-        // private static double TryGetMediaDurationSeconds(string path)
-        // {
-        //     string alias = "AudioCompressorDuration";
-        //     SendMci($"close {alias}");
 
-        //     string ext = Path.GetExtension(path).ToLowerInvariant();
-        //     string deviceType = ext == ".wav" ? "waveaudio" : "mpegvideo";
-        //     int result = SendMci($"open \"{path}\" type {deviceType} alias {alias}");
-
-        //     if (result != 0)
-        //         result = SendMci($"open \"{path}\" alias {alias}");
-
-        //     if (result != 0)
-        //         return 0;
-
-        //     try
-        //     {
-        //         SendMci($"set {alias} time format milliseconds");
-
-        //         StringBuilder length = new StringBuilder(64);
-        //         result = mciSendString($"status {alias} length", length, length.Capacity, IntPtr.Zero);
-        //         if (result != 0)
-        //             return 0;
-
-        //         if (double.TryParse(length.ToString(), out double milliseconds) && milliseconds > 0)
-        //             return milliseconds / 1000.0;
-
-        //         return 0;
-        //     }
-        //     finally
-        //     {
-        //         SendMci($"close {alias}");
-        //     }
-        // }
 
         private void OpenMciPlayer(string path)
         {
@@ -1141,8 +970,6 @@ namespace AudioCompressor
         private void BtnPlay_Click(object sender, EventArgs e)
         {
             if (_currentFile == null) return;
-            // if (_player == null)
-            // { MessageBox.Show("التشغيل متاح فقط لملفات WAV.", "تنبيه"); return; }
 
             try
             {
@@ -1594,10 +1421,7 @@ namespace AudioCompressor
             bool hasFile = _currentFile != null;
             bool hasResult = _lastResult != null;
             SetPlaybackButtons(_mciOpen);
-            // btnCompress.Enabled = hasFile;
-            //btnDecompress.Enabled = hasResult;
-            // btnSave.Enabled = hasResult;
-            //btnCancel.Enabled = false;
+
         }
     }
 }
